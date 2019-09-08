@@ -1,256 +1,286 @@
-https://hyperledger-fabric.readthedocs.io/en/release-1.4/enable_tls.html
+uncomment ca-tls, rca-org0, rca-org1, rca-org2
 
-### start tls-ca at :7052
+### start cas
 ```shell script
-docker-compose up ca-tls
+docker-compose up
 ```
 
+## SETUP CA
 ### tls-ca cert  
-- Create directory `tls-ca/crypto`. `tls-ca` is the tls-ca client.
+- Create directory `tls-ca/crypto`. 
 - Copy the trusted root certificate for the TLS CA from `tls/ca/crypto/ca-cert.pem` 
 to `tls-ca/crypto/tls-ca-cert.pem`. 
 
-### enroll the TLS CA admin and then register identities  
+### enroll the TLS CA admin => create tls-ca/admin
 ```shell script
 export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/tls-ca/crypto/tls-ca-cert.pem  && \
 export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/tls-ca/admin  && \
-fabric-ca-client enroll -d -u https://tls-ca-admin:tls-ca-adminpw@0.0.0.0:7052 && \
-fabric-ca-client register -d --id.name peer1-org1 --id.secret peer1PW --id.type peer -u https://0.0.0.0:7052 && \
-fabric-ca-client register -d --id.name peer2-org1 --id.secret peer2PW --id.type peer -u https://0.0.0.0:7052 && \
-fabric-ca-client register -d --id.name peer1-org2 --id.secret peer1PW --id.type peer -u https://0.0.0.0:7052 && \
-fabric-ca-client register -d --id.name peer2-org2 --id.secret peer2PW --id.type peer -u https://0.0.0.0:7052 && \
-fabric-ca-client register -d --id.name orderer1-org0 --id.secret ordererPW --id.type orderer -u https://0.0.0.0:7052
+fabric-ca-client enroll -d -u https://tls-ca-admin:tls-ca-adminpw@0.0.0.0:5052
 ```
-Add rca-org0 service
-Restart docker-compose :7053
-Open a new terminal
 
-### Setup Orderer Org CA  
+### list affilliation
+```shell script
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/tls-ca/crypto/tls-ca-cert.pem  && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/tls-ca/admin  && \
+fabric-ca-client affiliation list
+```
+
+### remove default affilliation
+```shell script
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/tls-ca/crypto/tls-ca-cert.pem  && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/tls-ca/admin  && \
+fabric-ca-client affiliation remove --force org1 && \
+fabric-ca-client affiliation remove --force org2
+```
+
+### create affilliation
+```shell script
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/tls-ca/crypto/tls-ca-cert.pem  && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/tls-ca/admin  && \
+fabric-ca-client affiliation add com && \
+fabric-ca-client affiliation add com.example && \
+fabric-ca-client affiliation add com.example.org1 && \
+fabric-ca-client affiliation add com.example.org2
+```
+
+## SETUP ORDERER
+### register tls for orderer
+```shell script
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/tls-ca/crypto/tls-ca-cert.pem  && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/tls-ca/admin  && \
+fabric-ca-client register -d --id.name orderer.example.com --id.secret ordererPW --id.affiliation "com.example" --id.type orderer -u https://0.0.0.0:5052 &&
+fabric-ca-client register -d --id.name peer0.org1.example.com --id.secret peer1pw --id.type peer --id.affiliation "com.example.org1" -u https://0.0.0.0:5052 &&
+fabric-ca-client register -d --id.name peer1.org1.example.com --id.secret peer2pw --id.type peer --id.affiliation "com.example.org1" -u https://0.0.0.0:5052 &&
+fabric-ca-client register -d --id.name peer0.org2.example.com --id.secret peer1pw --id.type peer --id.affiliation "com.example.org2" -u https://0.0.0.0:5052 &&
+fabric-ca-client register -d --id.name peer1.org2.example.com --id.secret peer2pw --id.type peer --id.affiliation "com.example.org2" -u https://0.0.0.0:5052
+```
+
+### enrol orderer example.com 
 ```shell script
 export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org0/ca/crypto/ca-cert.pem && \
 export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org0/ca/admin && \
-fabric-ca-client enroll -d -u https://rca-org0-admin:rca-org0-adminpw@0.0.0.0:7053 && \
-fabric-ca-client register -d --id.name orderer1-org0 --id.secret ordererpw --id.type orderer -u https://0.0.0.0:7053 && \
-fabric-ca-client register -d --id.name admin-org0 --id.secret org0adminpw --id.type admin --id.attrs "hf.Registrar.Roles=client,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert" -u https://0.0.0.0:7053
+fabric-ca-client enroll -d -u https://rca-org0-admin:rca-org0-adminpw@0.0.0.0:5053 
 ```
 
-Add rca-org1 service
-Restart docker-compose :7054
-Open a new terminal
-
-### Setup Org1’s CA  
+### list affilliation for orderer
 ```shell script
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/ca/crypto/ca-cert.pem && \
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/ca/admin && \
-fabric-ca-client enroll -d -u https://rca-org1-admin:rca-org1-adminpw@0.0.0.0:7054 && \
-fabric-ca-client register -d --id.name peer1-org1 --id.secret peer1PW --id.type peer -u https://0.0.0.0:7054 && \
-fabric-ca-client register -d --id.name peer2-org1 --id.secret peer2PW --id.type peer -u https://0.0.0.0:7054 && \
-fabric-ca-client register -d --id.name admin-org1 --id.secret org1AdminPW --id.type user -u https://0.0.0.0:7054 && \
-fabric-ca-client register -d --id.name user-org1 --id.secret org1UserPW --id.type user -u https://0.0.0.0:7054
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org0/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org0/ca/admin && \
+fabric-ca-client affiliation list
 ```
 
-Add rca-org2 service
-Restart docker-compose :7055
-Open a new terminal
-
-### Setup Org1’s CA  
+### remove default affilliation
 ```shell script
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org2/ca/crypto/ca-cert.pem && \
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org2/ca/admin && \
-fabric-ca-client enroll -d -u https://rca-org2-admin:rca-org2-adminpw@0.0.0.0:7055 && \
-fabric-ca-client register -d --id.name peer1-org2 --id.secret peer1PW --id.type peer -u https://0.0.0.0:7055 && \
-fabric-ca-client register -d --id.name peer2-org2 --id.secret peer2PW --id.type peer -u https://0.0.0.0:7055 && \
-fabric-ca-client register -d --id.name admin-org2 --id.secret org2AdminPW --id.type user -u https://0.0.0.0:7055 && \
-fabric-ca-client register -d --id.name user-org2 --id.secret org2UserPW --id.type user -u https://0.0.0.0:7055
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org0/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org0/ca/admin && \
+fabric-ca-client affiliation remove --force org1 && \
+fabric-ca-client affiliation remove --force org2
 ```
 
-create `org1/peer1/assets/ca`  
-copy `org1/ca/crypto/ca-cert.pem` to `org1/peer1/assets/ca/org1-ca-cert.pem`  
-open a new terminal
-
-### Enrol peer1-org1
+### create affilliation for orderer
 ```shell script
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/peer1 && \
-export FABRIC_CA_CLIENT_MSPDIR=msp
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/peer1/assets/ca/org1-ca-cert.pem && \
-fabric-ca-client enroll -d -u https://peer1-org1:peer1PW@0.0.0.0:7054
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org0/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org0/ca/admin && \
+fabric-ca-client affiliation add com && \
+fabric-ca-client affiliation add com.example && \
+fabric-ca-client affiliation add com.example.org1 && \
+fabric-ca-client affiliation add com.example.org2
 ```
 
-create `org1/peer1/assets/tls-ca`  
-copy `tls/ca/crypto/ca-cert.pem` to `org1/peer1/assets/tls-ca/tls-ca-cert.pem` 
-open a new terminal
-
-### Enrol tls-ca at peer1-org1
+### register orderer
 ```shell script
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/peer1 && \
-export FABRIC_CA_CLIENT_MSPDIR=tls-msp && \
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/peer1/assets/tls-ca/tls-ca-cert.pem  && \
-fabric-ca-client enroll -d -u https://peer1-org1:peer1PW@0.0.0.0:7052 --enrollment.profile tls --csr.hosts peer1-org1
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org0/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org0/ca/admin && \
+fabric-ca-client register -d --id.name orderer.example.com --id.secret ordererpw --id.affiliation "com.example" --id.type orderer -u https://0.0.0.0:5053 
 ```
 
-rename key in `org1/peer1/tls-msp/keystore` to `key.pem`
-create `org1/peer2/assets/ca`  
-copy `org1/ca/crypto/ca-cert.pem` to `org1/peer2/assets/ca/org1-ca-cert.pem`  
-Open a new terminal
-
-### Enrol peer2-org1
+### register orderer admin
 ```shell script
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca//org1/peer2 && \
-export FABRIC_CA_CLIENT_MSPDIR=msp && \
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca//org1/peer2/assets/ca/org1-ca-cert.pem && \
-fabric-ca-client enroll -d -u https://peer2-org1:peer2PW@0.0.0.0:7054
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org0/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org0/ca/admin && \
+fabric-ca-client register -d --id.name Admin@example.com --id.secret ordererpw --id.type client --id.affiliation "com.example" \
+--id.attrs '"hf.Registrar.Roles=client,orderer,peer,user","hf.Registrar.DelegateRoles=client,orderer,peer,user",hf.Registrar.Attributes=*,hf.GenCRL=true,hf.Revoker=true,hf.AffiliationMgr=true,hf.IntermediateCA=true,role=admin:ecert' \
+-u https://0.0.0.0:5053
 ```
 
-create `org1/peer2/assets/tls-ca`  
-copy `tls/ca/crypto/ca-cert.pem` to `org1/peer2/assets/tls-ca/tls-ca-cert.pem` 
-open a new terminal
-
-### Enrol tls-ca at peer2-org1
-```shell script
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca//org1/peer2 && \
-export FABRIC_CA_CLIENT_MSPDIR=tls-msp && \
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca//org1/peer2/assets/tls-ca/tls-ca-cert.pem && \
-fabric-ca-client enroll -d -u https://peer2-org1:peer2PW@0.0.0.0:7052 --enrollment.profile tls --csr.hosts peer2-org1
-```
-
-rename key in `org1/peer1/tls-msp/keystore` to `key.pem`
-
-### Enrol org1 Admin
-```shell script
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/admin && \
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/peer1/assets/ca/org1-ca-cert.pem && \
-export FABRIC_CA_CLIENT_MSPDIR=msp && \
-fabric-ca-client enroll -d -u https://admin-org1:org1AdminPW@0.0.0.0:7054
-```
-
-### Create admincerts
-```shell script
-mkdir /Users/tangross/dev/2019/fabric-ca/org1/peer1/msp/admincerts
-cp /Users/tangross/dev/2019/fabric-ca/org1/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org1/peer1/msp/admincerts/org1-admin-cert.pem
-```
-
-copy admincerts to peer2 as well
-
-### Launch org1  
-Add peer1-org1 and peer2-org1 services
-Restart docker-compose: 7051 and 8051
-
-create `org2/peer1/assets/ca`  
-copy `org2/ca/crypto/ca-cert.pem` to `org2/peer1/assets/ca/org2-ca-cert.pem` 
-open a new terminal
-
-### Enroll peer1-org2
-```shell script
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org2/peer1 && \
-export FABRIC_CA_CLIENT_MSPDIR=msp && \
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org2/peer1/assets/ca/org2-ca-cert.pem && \
-fabric-ca-client enroll -d -u https://peer1-org2:peer1PW@0.0.0.0:7055
-```
-
-create `org2/peer1/assets/tls-ca`  
-copy `tls/ca/crypto/ca-cert.pem` to `org2/peer1/assets/tls-ca/tls-ca-cert.pem` 
-open a new terminal
-
-### Enroll peer1-org2 tls-ca
-```shell script
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org2/peer1 && \
-export FABRIC_CA_CLIENT_MSPDIR=tls-msp && \
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org2/peer1/assets/tls-ca/tls-ca-cert.pem && \
-fabric-ca-client enroll -d -u https://peer1-org2:peer1PW@0.0.0.0:7052 --enrollment.profile tls --csr.hosts peer1-org2
-```
-rename key in `org2/peer1/tls-msp/keystore` to `key.pem`
-create `org2/peer2/assets/ca`  
-copy `org2/ca/crypto/ca-cert.pem` to `org2/peer2/assets/ca/org2-ca-cert.pem` 
-Open a new terminal  
-
-### Enroll peer2-org2
-```shell script
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org2/peer2 && \
-export FABRIC_CA_CLIENT_MSPDIR=msp && \
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org2/peer2/assets/ca/org2-ca-cert.pem && \
-fabric-ca-client enroll -d -u https://peer2-org2:peer2PW@0.0.0.0:7055
-```
-
-create `org2/peer2/assets/tls-ca`  
-copy `tls/ca/crypto/ca-cert.pem` to `org2/peer2/assets/tls-ca/tls-ca-cert.pem` 
-open a new terminal
-
-### Enroll peer2-org2 tls-ca
-```shell script
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org2/peer2 && \
-export FABRIC_CA_CLIENT_MSPDIR=tls-msp && \
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org2/peer2/assets/tls-ca/tls-ca-cert.pem && \
-fabric-ca-client enroll -d -u https://peer2-org2:peer2PW@0.0.0.0:7052 --enrollment.profile tls --csr.hosts peer2-org2
-```
-
-rename key in `org2/peer1/tls-msp/keystore` to `key.pem`
-
-### Enroll org2 admin
-```shell script
-export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org2/admin && \
-export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org2/ca/crypto/ca-cert.pem && \
-export FABRIC_CA_CLIENT_MSPDIR=msp && \
-fabric-ca-client enroll -d -u https://admin-org2:org2AdminPW@0.0.0.0:7055
-```
-
-### Create org2 admincerts
-```shell script
-mkdir /Users/tangross/dev/2019/fabric-ca/org2/peer1/msp/admincerts
-cp /Users/tangross/dev/2019/fabric-ca/org2/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org2/peer1/msp/admincerts/org2-admin-cert.pem
-```
-
-create org2 admincert for peer2
 create `org0/orderer/assets/ca`  
 copy `org0/ca/crypto/ca-cert.pem` to `org0/orderer/assets/ca/org0-ca-cert.pem` 
 
-### Enrol orderer  
 ```shell script
 export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org0/orderer && \
 export FABRIC_CA_CLIENT_MSPDIR=msp && \
 export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org0/orderer/assets/ca/org0-ca-cert.pem && \
-fabric-ca-client enroll -d -u https://orderer1-org0:ordererpw@0.0.0.0:7053
+fabric-ca-client enroll -d -u https://orderer.example.com:ordererpw@0.0.0.0:5053
 ```
 
 create `org0/orderer/assets/tls-ca`  
-copy `tls/ca/crypto/ca-cert.pem` to `org2/peer2/assets/tls-ca/tls-ca-cert.pem` 
-
-### Enrol orderer tls-ca
+copy `tls/ca/crypto/tls-ca-cert.pem` to `org2/peer2/assets/tls-ca/tls-ca-cert.pem` 
 
 ```shell script
 export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org0/orderer && \
 export FABRIC_CA_CLIENT_MSPDIR=tls-msp && \
 export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org0/orderer/assets/tls-ca/tls-ca-cert.pem && \
-fabric-ca-client enroll -d -u https://orderer1-org0:ordererPW@0.0.0.0:7052 --enrollment.profile tls --csr.hosts orderer1-org0
+fabric-ca-client enroll -d -u https://orderer.example.com:ordererPW@0.0.0.0:5052 --enrollment.profile tls --csr.hosts orderer.example.com
 ```
 
-### Create orderer admincerts
+rename key in `org0/orderer/tls-msp/keystore` to `key.pem`
 
+### enrol orderer admin
 ```shell script
 export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org0/admin && \
 export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org0/ca/crypto/ca-cert.pem && \
 export FABRIC_CA_CLIENT_MSPDIR=msp && \
-fabric-ca-client enroll -d -u https://admin-org0:org0adminpw@0.0.0.0:7053
+fabric-ca-client enroll -d -u https://Admin@example.com:ordererpw@0.0.0.0:5053
 ```
+
+### create admincerts
+```shell script
+mkdir /Users/tangross/dev/2019/fabric-ca/org0/orderer/msp/admincerts && \
+cp /Users/tangross/dev/2019/fabric-ca/org0/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org0/orderer/msp/admincerts/org0-admin-cert.pem && \
+mkdir /Users/tangross/dev/2019/fabric-ca/org0/admin/msp/admincerts && \
+cp /Users/tangross/dev/2019/fabric-ca/org0/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org0/admin/msp/admincerts/org0-admin-cert.pem && \
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org0/msp/admincerts && \
+cp /Users/tangross/dev/2019/fabric-ca/org0/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org0/msp/admincerts/org0-admin-cert.pem
+```
+
+## SETUP ORG1
+### enrol org1 peers
+```shell script
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/ca/admin && \
+fabric-ca-client enroll -d -u https://rca-org1-admin:rca-org1-adminpw@0.0.0.0:5054 
+```
+
+### list affilliation for org1
+```shell script
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/ca/admin && \
+fabric-ca-client affiliation list
+```
+
+### create affilliation for org1
+```shell script
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/ca/admin && \
+fabric-ca-client affiliation remove --force org1 && \
+fabric-ca-client affiliation remove --force org2 && \
+fabric-ca-client affiliation add com && \
+fabric-ca-client affiliation add com.example && \
+fabric-ca-client affiliation add com.example.org1 && \
+fabric-ca-client affiliation add com.example.org2
+```
+
+### register org1 peer 0
+```shell script
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/ca/admin && \
+fabric-ca-client register -d --id.name peer0.org1.example.com --id.secret peer1pw --id.type peer --id.affiliation "com.example.org1" -u https://0.0.0.0:5054
+```
+
+### register org1 peer 1
+```shell script
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/ca/admin && \
+fabric-ca-client register -d --id.name peer1.org1.example.com --id.secret peer2pw --id.type peer --id.affiliation "com.example.org1" -u https://0.0.0.0:5054
+```
+
+### register org1 admin
+```shell script
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/ca/admin && \
+fabric-ca-client register -d --id.name Admin@org1.example.com --id.secret peer1pw --id.type client --id.affiliation "com.example.org1" \
+--id.attrs '"hf.Registrar.Roles=client,orderer,peer,user","hf.Registrar.DelegateRoles=client,orderer,peer,user",hf.Registrar.Attributes=*,hf.GenCRL=true,hf.Revoker=true,hf.AffiliationMgr=true,hf.IntermediateCA=true,role=admin:ecert' \
+-u https://0.0.0.0:5054
+```
+
+### enrol peer0.org1
+create `org1/peer0/assets/ca`  
+copy `org1/ca/crypto/ca-cert.pem` to `org1/peer1/assets/ca/org1-ca-cert.pem`
 
 ```shell script
-mkdir /Users/tangross/dev/2019/fabric-ca/org0/orderer/msp/admincerts
-cp /Users/tangross/dev/2019/fabric-ca/org0/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org0/orderer/msp/admincerts/orderer-admin-cert.pem
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/peer0 && \
+export FABRIC_CA_CLIENT_MSPDIR=msp && \
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/peer0/assets/ca/org1-ca-cert.pem && \
+fabric-ca-client enroll -d -u https://peer0.org1.example.com:peer1pw@0.0.0.0:5054
 ```
 
-create configtx.yaml
+create `org1/peer0/assets/tls-ca`  
+copy `tls/ca/crypto/ca-cert.pem` to `org1/peer0/assets/tls-ca/tls-ca-cert.pem` 
 
-create `org0/msp` and its content 
-create `org1/msp` and its content
-create `org2/msp` and its content
-
-### Genesis Block
+### Enrol tls-ca for peer0.org1
 ```shell script
-cd /Users//tangross/dev/2019/fabric-ca/org0
-configtxgen -profile OrgsOrdererGenesis -channelID mychannel -outputBlock /Users/tangross/dev/2019/fabric-ca/org0/orderer/genesis.block
-configtxgen -profile OrgsChannel -outputCreateChannelTx /Users/tangross/dev/2019/fabric-ca/org0/orderer/channel.tx -channelID mychannel
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/peer0 && \
+export FABRIC_CA_CLIENT_MSPDIR=tls-msp && \
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/peer0/assets/tls-ca/tls-ca-cert.pem  && \
+fabric-ca-client enroll -d -u https://peer0.org1.example.com:peer1pw@0.0.0.0:5052 --enrollment.profile tls --csr.hosts peer0.org1.example.com
 ```
 
-create org1 and org2 CLIs
+rename key in `org1/peer0/tls-msp/keystore` to `key.pem`
+create `org1/peer1/assets/ca`  
+copy `org1/ca/crypto/ca-cert.pem` to `org1/peer1/assets/ca/org1-ca-cert.pem`
+
+```shell script
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/peer1 && \
+export FABRIC_CA_CLIENT_MSPDIR=msp && \
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/peer1/assets/ca/org1-ca-cert.pem && \
+fabric-ca-client enroll -d -u https://peer1.org1.example.com:peer2pw@0.0.0.0:5054
+```
+
+### Enrol tls-ca for peer0.org1
+create `org1/peer1/assets/tls-ca`  
+copy `tls/ca/crypto/ca-cert.pem` to `org1/peer2/assets/tls-ca/tls-ca-cert.pem` 
+
+```shell script
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/peer1 && \
+export FABRIC_CA_CLIENT_MSPDIR=tls-msp && \
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/peer1/assets/tls-ca/tls-ca-cert.pem  && \
+fabric-ca-client enroll -d -u https://peer1.org1.example.com:peer2pw@0.0.0.0:5052 --enrollment.profile tls --csr.hosts peer1.org1.example.com
+```
+
+rename key in `org1/peer2/tls-msp/keystore` to `key.pem`
+
+### enrol org1 admin
+```shell script
+export FABRIC_CA_CLIENT_HOME=/Users/tangross/dev/2019/fabric-ca/org1/admin && \
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/Users/tangross/dev/2019/fabric-ca/org1/ca/crypto/ca-cert.pem && \
+export FABRIC_CA_CLIENT_MSPDIR=msp && \
+fabric-ca-client enroll -d -u https://Admin@org1.example.com:peer1pw@0.0.0.0:5054
+```
+
+### create admincerts
+```shell script
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org1/peer0/msp/admincerts && \
+cp /Users/tangross/dev/2019/fabric-ca/org1/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org1/peer0/msp/admincerts/org1-admin-cert.pem && \
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org1/peer1/msp/admincerts && \
+cp /Users/tangross/dev/2019/fabric-ca/org1/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org1/peer1/msp/admincerts/org1-admin-cert.pem && \
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org1/admin/msp/admincerts && \
+cp /Users/tangross/dev/2019/fabric-ca/org1/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org1/admin/msp/admincerts/org1-admin-cert.pem && \
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org0/msp/admincerts && \
+cp /Users/tangross/dev/2019/fabric-ca/org1/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org1/msp/admincerts/org1-admin-cert.pem
+```
+
+### configtx.yaml
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org0/msp/cacerts && \ 
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org1/msp/cacerts && \ 
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org0/msp/tlscacerts && \ 
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org1/msp/tlscacerts && \ 
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org0/msp/admincerts && \ 
+mkdir -p /Users/tangross/dev/2019/fabric-ca/org1/msp/admincerts && \ 
+cp /Users/tangross/dev/2019/fabric-ca/org0/ca/crypto/ca-cert.pem /Users/tangross/dev/2019/fabric-ca/org0/msp/cacerts/org0-ca-cert.pem && \
+cp /Users/tangross/dev/2019/fabric-ca/org1/ca/crypto/ca-cert.pem /Users/tangross/dev/2019/fabric-ca/org1/msp/cacerts/org1-ca-cert.pem && \
+cp /Users/tangross/dev/2019/fabric-ca/tls-ca/crypto/tls-ca-cert.pem /Users/tangross/dev/2019/fabric-ca/org0/msp/tlscacerts/tls-ca-cert.pem && \
+cp /Users/tangross/dev/2019/fabric-ca/tls-ca/crypto/tls-ca-cert.pem /Users/tangross/dev/2019/fabric-ca/org1/msp/tlscacerts/tls-ca-cert.pem && \
+cp /Users/tangross/dev/2019/fabric-ca/org1/admin/msp/signcerts/cert.pem /Users/tangross/dev/2019/fabric-ca/org1/msp/admincerts/org1-admin-cert.pem
+
+copy configtx.yaml to org0
+
+configtxgen -profile TwoOrgsOrdererGenesis -channelID syschannel -outputBlock /Users/tangross/dev/2019/fabric-ca/org0/orderer/genesis.block && \
+configtxgen -profile TwoOrgsChannel -channelID mychannel -outputCreateChannelTx /Users/tangross/dev/2019/fabric-ca/org0/orderer/channel.tx
+
+configtxgen -inspectBlock genesis.block
+
+uncomment cli and peers
+restart docker compose
 
 ```shell script
 docker exec -it cli-org1 bash
@@ -258,12 +288,8 @@ docker exec -it cli-org1 bash
 
 ```shell script
 export CORE_PEER_MSPCONFIGPATH=/tmp/hyperledger/org1/admin/msp && \
-peer channel create -c mychannel -f /tmp/hyperledger/org1/peer1/assets/channel.tx -o orderer1-org0:7050 \
---outputBlock /tmp/hyperledger/org1/peer1/assets/mychannel.block --tls \
---cafile /tmp/hyperledger/org0/msp/cacerts/org0-ca-cert.pem
-```
-
-```shell script
-configtxgen -inspectBlock genesis.block
+peer channel create -c mychannel -f /tmp/hyperledger/org1/peer0/assets/channel.tx -o orderer.example.com:7050 \
+--outputBlock /tmp/hyperledger/org1/peer0/assets/mychannel.block --tls \
+--cafile /tmp/hyperledger/org1/peer0/tls-msp/tlscacerts/tls-0-0-0-0-5052.pem
 ```
 

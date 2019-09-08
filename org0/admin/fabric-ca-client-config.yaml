@@ -40,7 +40,7 @@
 #############################################################################
 
 # URL of the Fabric-ca-server (default: http://localhost:7054)
-url: https://0.0.0.0:7053
+url: https://0.0.0.0:5053
 
 # Membership Service Provider (MSP) directory
 # This is useful when the client is used to enroll a peer or orderer, so
@@ -99,7 +99,7 @@ tls:
 #
 #############################################################################
 csr:
-  cn: admin-org0
+  cn: Admin@example.com
   keyrequest:
     algo: ecdsa
     size: 256
@@ -111,7 +111,7 @@ csr:
       O: Hyperledger
       OU: Fabric
   hosts:
-    - Tszs-MBP
+    - Tszs-MacBook-Pro.local
 
 #############################################################################
 #  Registration section used to register a new identity with fabric-ca server
