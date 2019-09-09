@@ -8,7 +8,7 @@ Organizations:
     Policies:
       Readers:
         Type: Signature
-        Rule: "OR('OrdererMSP.member')"
+        Rule: "OR('OrdererMSP.member','OrdererMSP.admin','OrdererMSP.client','OrdererMSP.peer','Org1MSP.member','Org1MSP.admin','Org1MSP.peer','Org1MSP.client')"
       Writers:
         Type: Signature
         Rule: "OR('OrdererMSP.member')"
@@ -22,13 +22,14 @@ Organizations:
     Policies:
       Readers:
         Type: Signature
-        Rule: "OR( 'Org1MSP.admin', 'Org1MSP.peer', 'Org1MSP.client')"
+#        Rule: "OR('Org1MSP.admin', 'Org1MSP.peer', 'Org1MSP.client')"
+        Rule: "OR('Org1MSP.admin','Org1MSP.peer','Org1MSP.client','OrdererMSP.member','OrdererMSP.admin','OrdererMSP.peer','OrdererMSP.client' )"
       Writers:
         Type: Signature
-        Rule: "OR( 'Org1MSP.admin', 'Org1MSP.client')"
+        Rule: "OR('Org1MSP.admin', 'Org1MSP.client')"
       Admins:
         Type: Signature
-        Rule: "OR('Org1MSP.admin')"
+        Rule: "OR('Org1MSP.admin', 'Org1MSP.member', 'OrdererMSP.member')"
     AnchorPeers:
       - Host: peer0.org1.example.com
         Port: 7051
@@ -52,7 +53,7 @@ Orderer: &OrdererDefaults
       Rule: "ANY Writers"
     Admins:
       Type: ImplicitMeta
-      Rule: "MAJORITY Admins"
+      Rule: "ANY Admins"
     BlockValidation:
       Type: ImplicitMeta
       Rule: "ANY Writers"
@@ -68,7 +69,7 @@ Application: &ApplicationDefaults
       Rule: "ANY Writers"
     Admins:
       Type: ImplicitMeta
-      Rule: "MAJORITY Admins"
+      Rule: "ANY Admins"
 
 Channel: &ChannelDefaults
   Policies:
@@ -80,7 +81,7 @@ Channel: &ChannelDefaults
       Rule: "ANY Writers"
     Admins:
       Type: ImplicitMeta
-      Rule: "MAJORITY Admins"
+      Rule: "ANY Admins"
 
 Profiles:
   TwoOrgsOrdererGenesis:
