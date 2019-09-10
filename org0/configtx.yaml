@@ -8,10 +8,10 @@ Organizations:
     Policies:
       Readers:
         Type: Signature
-        Rule: "OR('OrdererMSP.member','OrdererMSP.admin','OrdererMSP.client','OrdererMSP.peer','Org1MSP.member','Org1MSP.admin','Org1MSP.peer','Org1MSP.client')"
+        Rule: "OR('OrdererMSP.member','Org1MSP.member')"
       Writers:
         Type: Signature
-        Rule: "OR('OrdererMSP.member')"
+        Rule: "OR('OrdererMSP.member','Org1MSP.member')"
       Admins:
         Type: Signature
         Rule: "OR('OrdererMSP.admin')"
@@ -22,14 +22,14 @@ Organizations:
     Policies:
       Readers:
         Type: Signature
-#        Rule: "OR('Org1MSP.admin', 'Org1MSP.peer', 'Org1MSP.client')"
-        Rule: "OR('Org1MSP.admin','Org1MSP.peer','Org1MSP.client','OrdererMSP.member','OrdererMSP.admin','OrdererMSP.peer','OrdererMSP.client' )"
+        #        should use member
+        Rule: "OR('OrdererMSP.member', 'Org1MSP.member')"
       Writers:
         Type: Signature
         Rule: "OR('Org1MSP.admin', 'Org1MSP.client')"
       Admins:
         Type: Signature
-        Rule: "OR('Org1MSP.admin', 'Org1MSP.member', 'OrdererMSP.member')"
+        Rule: "OR('Org1MSP.admin')"
     AnchorPeers:
       - Host: peer0.org1.example.com
         Port: 7051
