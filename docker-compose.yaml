@@ -232,7 +232,7 @@ services:
     image: hyperledger/fabric-orderer
     environment:
       - ORDERER_HOME=/tmp/hyperledger/orderer
-      - ORDERER_HOST=orderer1-org0:7050
+      - ORDERER_HOST=orderer.example.com:7050
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
       - ORDERER_GENERAL_GENESISMETHOD=file
       - ORDERER_GENERAL_GENESISFILE=/tmp/hyperledger/org0/orderer/genesis.block
@@ -248,8 +248,8 @@ services:
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric
     command: orderer
     volumes:
-      - /Users/tangross/dev/2019/fabric-ca/org0/orderer:/tmp/hyperledger/org0/orderer/
-#      - /Users/tangross/dev/2019/fabric-ca/prod/orderer1-org0:/var/hyperledger/production/orderer
+      - ./org0/orderer:/tmp/hyperledger/org0/orderer/
+#      - ./prod/orderer1-org0:/var/hyperledger/production/orderer
     networks:
       - fabric-ca
     depends_on:
